@@ -592,7 +592,7 @@
             restoreConfigFromPrefs();
             ttbs.setDefaultOverlay(prefsState.ovidx);
 
-            // $log.debug('registered overlays...', tov.list());
+            // $log.debug('registered overlays...', tov.list()); ok test
             $log.log('OvTetopoCtrl has been created');
 
 
