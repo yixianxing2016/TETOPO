@@ -456,6 +456,7 @@
         if (d) {
             // tts.selectIntent(d);
         }
+        // toggleOffline(false);
     }
 
 // -- end topo function ----------------------------
@@ -486,7 +487,8 @@
                     zoomLayer: function () { return zoomLayer; },
                     zoomer: function () { return zoomer; },
                     opacifyMap: opacifyMap,
-                    topoStartDone: topoStartDone
+                    topoStartDone: topoStartDone,
+                    visHidden: toggleOffline
                 };
 
             $log = _$log_;
@@ -578,7 +580,6 @@
                     // need to do the following so we immediately get
                     //  the summary panel data back from the server
                     // restoreSummaryFromPrefs();
-                    tps.toggleOffline(false);
                 }
             );
             tes.bindHandlers();

@@ -275,6 +275,10 @@
         uplink.topoStartDone();
     }
 
+    function visHidden() {
+        uplink.visHidden();
+    }
+
     // ========================
 
     function nodeById(id) {
@@ -613,6 +617,10 @@
         node = nodeG.selectAll('.node')
             .data(network.nodes, function (d) { return d.id; });
 
+        // node.forEach(function (d) {
+        //     sus.visible(d.el, false);
+        // });
+
         // operate on existing nodes:
         node.filter('.device').each(td3.deviceExisting);
         node.filter('.host').each(td3.hostExisting);
@@ -638,6 +646,14 @@
         // augment entering nodes:
         entering.filter('.device').each(td3.deviceEnter);
         entering.filter('.host').each(td3.hostEnter);
+
+        // filter opt node
+        entering[0].forEach(function (d) {
+            var device = d.__data__;
+            if(device.props.ctrl_layer == "opt") {
+                sus.visible(device.el, false);
+            }
+        });
 
         // operate on both existing and new nodes:
         td3.updateDeviceColors();
@@ -781,6 +797,13 @@
 
         // augment links
         entering.each(td3.linkEntering);
+
+        entering[0].forEach(function (l) {
+            var line = l.__data__;
+            if(line.source.props.ctrl_layer == "opt" || line.target.props.ctrl_layer == "opt") {
+                sus.visible(line.el, false);
+            }
+        });
 
         // operate on both existing and new links:
         //link.each(...)
@@ -1199,7 +1222,8 @@
                 addLink: addLink,
                 updateLink: updateLink,
                 removeLink: removeLink,
-                meowTopoStartDone: topoStartDone
+                meowTopoStartDone: topoStartDone,
+                visHidden: visHidden
             };
         }]);
 }());

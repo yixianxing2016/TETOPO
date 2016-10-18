@@ -235,6 +235,7 @@
                 fixedOptPOS(children[j], j, count, parentNode);
             }
         }
+
     }
 
     function showPlane(tag, box, dir) {

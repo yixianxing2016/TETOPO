@@ -62,6 +62,7 @@
             removeLink: tfs,
 
             meowTopoStartDone: tfs,
+            visHidden: tfs,
 
             spriteListResponse: tspr,
             spriteDataResponse: tspr

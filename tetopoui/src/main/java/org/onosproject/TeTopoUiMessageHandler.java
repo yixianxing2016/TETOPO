@@ -37,24 +37,24 @@ import org.onosproject.net.device.DeviceListener;
 import org.onosproject.net.link.LinkEvent;
 import org.onosproject.net.link.LinkListener;
 import org.onosproject.net.provider.ProviderId;
-import org.onosproject.tetopology.management.api.InternalTeNetwork;
-import org.onosproject.tetopology.management.api.KeyId;
-import org.onosproject.tetopology.management.api.Network;
-import org.onosproject.tetopology.management.api.TeTopologyType;
-import org.onosproject.tetopology.management.api.link.NetworkLink;
-import org.onosproject.tetopology.management.api.node.ConnectivityMatrix;
-import org.onosproject.tetopology.management.api.node.DefaultNetworkNode;
-import org.onosproject.tetopology.management.api.node.NetworkNode;
-import org.onosproject.tetopology.management.api.node.NetworkNodeKey;
-import org.onosproject.tetopology.management.api.node.TeNode;
-import org.onosproject.tetopology.management.api.node.TerminationPointKey;
+//import org.onosproject.tetopology.management.api.InternalTeNetwork;
+//import org.onosproject.tetopology.management.api.KeyId;
+//import org.onosproject.tetopology.management.api.Network;
+//import org.onosproject.tetopology.management.api.TeTopologyType;
+//import org.onosproject.tetopology.management.api.link.NetworkLink;
+//import org.onosproject.tetopology.management.api.node.ConnectivityMatrix;
+//import org.onosproject.tetopology.management.api.node.DefaultNetworkNode;
+//import org.onosproject.tetopology.management.api.node.NetworkNode;
+//import org.onosproject.tetopology.management.api.node.NetworkNodeKey;
+//import org.onosproject.tetopology.management.api.node.TeNode;
+//import org.onosproject.tetopology.management.api.node.TerminationPointKey;
 import org.onosproject.ui.JsonUtils;
 import org.onosproject.ui.RequestHandler;
 import org.onosproject.ui.UiConnection;
 import org.onosproject.ui.topo.PropertyPanel;
 
 import java.util.Collection;
-import java.util.List;
+//import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
@@ -90,6 +90,7 @@ public class TeTopoUiMessageHandler extends TeTopoUiMessageHandlerBase {
 
     private static final String SHOW_DETAILS = "showDetails";
     private static final String TOPO_START_DONE = "meowTopoStartDone";
+    private static final String TOPO_VIS_HIDDEN = "visHidden";
 
 
     // fields
@@ -189,11 +190,14 @@ public class TeTopoUiMessageHandler extends TeTopoUiMessageHandlerBase {
             sendAllInstances(null);
 
             // normal topo
-//            sendAllDevices();
-//            sendAllLinks();
+            sendAllDevices();
+            sendAllLinks();
+
+            // hidden offline device
+//            sendTopoVisHidden();
 
             // Te topo: gui view init
-            sendTeTopology();
+//            sendTeTopology();
 //            sendAllHosts();
             sendTopoStartDone();
         }
@@ -234,6 +238,10 @@ public class TeTopoUiMessageHandler extends TeTopoUiMessageHandlerBase {
 
     private void sendTopoStartDone() {
         sendMessage(JsonUtils.envelope(TOPO_START_DONE, objectNode()));
+    }
+
+    private void sendTopoVisHidden() {
+        sendMessage(JsonUtils.envelope(TOPO_VIS_HIDDEN, objectNode()));
     }
 
     // Sends all devices to the client as device-added messages.
@@ -395,206 +403,206 @@ public class TeTopoUiMessageHandler extends TeTopoUiMessageHandlerBase {
                                               createDemoLink(srcId, dstId))));
     }
 
-    private void sendTeTopology() {
-        List<Network> networks = teTopologyService.getNetworks().networks();
-        for (Network network : networks) {
-            if (network instanceof InternalTeNetwork) {
-                if (((InternalTeNetwork) network).getTeTopologyType() == TeTopologyType.NATIVE) {
-                    sendUpLayer(network);
-                }
-            }
-        }
-    }
-
-    // send uplayer network nodes
-    private void sendUpLayer(Network network) {
-        // send te
-        List<NetworkNode> nodes = network.getNodes();
-        sendTe(nodes, network);
-
-        // send te link
-        List<NetworkLink> links = network.getLinks();
-        sendTeLink(links);
-    }
-
-    private void sendTe(List<NetworkNode> nodes, Network network) {
-        KeyId networkId = network.networkId();
-
-        for (NetworkNode node : nodes) {
-            if (node instanceof DefaultNetworkNode) {
-                DefaultNetworkNode defaultNode = (DefaultNetworkNode) node;
-                // send te
-                sendTeDevice(defaultNode, networkId);
-                // send supportingNode
-                sendInnerLayer(defaultNode);
-            }
-        }
-
-    }
-
-    private void sendInnerLayer(DefaultNetworkNode defaultNode) {
-        innerLayerDevices(defaultNode);
-        innerLayerLinks(defaultNode);
-    }
-
-    private void innerLayerDevices(DefaultNetworkNode defaultNode) {
-        List<NetworkNodeKey> supportingNodeIds = defaultNode
-                .getSupportingNodeIds();
-        TeNode te = defaultNode.getTe();
-        if (supportingNodeIds == null) {
-            return;
-        }
-        for (NetworkNodeKey key : supportingNodeIds) {
-            Device device = createSupportingDevice(key, te);
-            sendMessage(deviceMessageLayer(
-                    new DeviceEvent(DEVICE_ADDED, device)));
-
-            Link link = createMiddleLink(key, defaultNode);
-            sendMessage(linkMessage(new LinkEvent(LINK_ADDED, link)));
-        }
-
-    }
-
-    private void innerLayerLinks(DefaultNetworkNode defaultNode) {
-        TeNode te = defaultNode.getTe();
-        List<ConnectivityMatrix> connMatrices = te
-                .connectivityMatrices();
-        if (connMatrices == null) {
-            return;
-        }
-        for (ConnectivityMatrix matrix : connMatrices) {
-            Link link = createMatrixLink(matrix);
-
-            sendMessage(linkMessage(new LinkEvent(LINK_ADDED, link)));
-        }
-    }
-
-
-    private void sendTeDevice(DefaultNetworkNode defaultNode, KeyId networkId) {
-//        TeNode te = defaultNode.getTe();
-        Device device = createTeDevice(defaultNode, networkId);
-        sendMessage(deviceMessageLayer(
-                new DeviceEvent(DEVICE_ADDED, device)));
-    }
-
-    private Device createTeDevice(DefaultNetworkNode node, KeyId networkId) {
-        DefaultAnnotations annotations =
-                DefaultAnnotations.builder().set("name", node.nodeId().toString())
-                        .set(LAYER_KEY, LAYER_CONTROLLER)
-                        .set(LAYER_MASTER, networkId.toString())
-                        .build();
-        Device device = new DefaultDevice(null,
-                                          DeviceId.deviceId(node.nodeId().toString()),
-                                          Device.Type.SWITCH,
-                                          "",
-                                          "",
-                                          "",
-                                          "",
-                                          null,
-                                          annotations);
-
-        return device;
-    }
-
-    private Device createSupportingDevice(NetworkNodeKey key, TeNode te) {
-        DefaultAnnotations annotations =
-                DefaultAnnotations.builder().set("name", key.nodeId().toString())
-                        .set(LAYER_KEY, LAYER_TRAFFIC)
-                        .set(LAYER_MASTER, te.teNodeId())
-                        .build();
-        Device device = new DefaultDevice(null,
-                                          DeviceId.deviceId(key.nodeId().toString()),
-                                          Device.Type.SWITCH,
-                                          "",
-                                          "",
-                                          "",
-                                          "",
-                                          null,
-                                          annotations);
-
-        return device;
-    }
-
-    private void sendTeLink(List<NetworkLink> links) {
-        for (NetworkLink networkLink : links) {
-            Link link = createTeLink(networkLink);
-
-            sendMessage(linkMessage(new LinkEvent(LINK_ADDED, link)));
-        }
-    }
-
-    private Link createTeLink(NetworkLink networkLink) {
-        TerminationPointKey from = networkLink.getSource();
-        TerminationPointKey to = networkLink.getDestination();
-
-        ConnectPoint src = new ConnectPoint(DeviceId.deviceId(from.nodeId().toString()),
-                                            PortNumber.portNumber(portNaNCheck(from.tpId())));
-
-        ConnectPoint dst = new ConnectPoint(DeviceId.deviceId(to.nodeId().toString()),
-                                            PortNumber.portNumber(portNaNCheck(to.tpId())));
-
-        DefaultLink.Builder builder = DefaultLink.builder();
-        builder.providerId(new ProviderId("127.0.0.1", "meow-topo"));
-        builder.src(src);
-        builder.dst(dst);
-        builder.type(Link.Type.DIRECT);
-        builder.state(Link.State.ACTIVE);
-        builder.isExpected(true);
-        Link link = builder.build();
-
-        return link;
-    }
-
-    private Link createMiddleLink(NetworkNodeKey key, DefaultNetworkNode node) {
-        ConnectPoint src = new ConnectPoint(DeviceId.deviceId(node.nodeId().toString()),
-                                            PortNumber.portNumber("0"));
-
-        ConnectPoint dst = new ConnectPoint(DeviceId.deviceId(key.nodeId().toString()),
-                                            PortNumber.portNumber("0"));
-
-        DefaultLink.Builder builder = DefaultLink.builder();
-        builder.providerId(new ProviderId("127.0.0.1", "meow-topo"));
-        builder.src(src);
-        builder.dst(dst);
-        builder.type(Link.Type.DIRECT);
-
-        builder.state(Link.State.ACTIVE);
-        builder.isExpected(true);
-        Link link = builder.build();
-
-        return link;
-    }
-
-    private Link createMatrixLink(ConnectivityMatrix matrix) {
-        TerminationPointKey from = matrix.from();
-        TerminationPointKey to = matrix.to();
-
-        ConnectPoint src = new ConnectPoint(DeviceId.deviceId(from.nodeId().toString()),
-                                            PortNumber.portNumber(portNaNCheck(from.tpId())));
-
-        ConnectPoint dst = new ConnectPoint(DeviceId.deviceId(to.nodeId().toString()),
-                                            PortNumber.portNumber(portNaNCheck(to.tpId())));
-
-        DefaultLink.Builder builder = DefaultLink.builder();
-        builder.providerId(new ProviderId("127.0.0.1", "meow-topo"));
-        builder.src(src);
-        builder.dst(dst);
-        builder.type(Link.Type.DIRECT);
-
-        builder.state(Link.State.ACTIVE);
-        builder.isExpected(true);
-        Link link = builder.build();
-
-        return link;
-    }
-
-    private String portNaNCheck(KeyId tpId) {
-//        if (tpId == null) {
-//            return "0";
+//    private void sendTeTopology() {
+//        List<Network> networks = teTopologyService.getNetworks().networks();
+//        for (Network network : networks) {
+//            if (network instanceof InternalTeNetwork) {
+//                if (((InternalTeNetwork) network).getTeTopologyType() == TeTopologyType.NATIVE) {
+//                    sendUpLayer(network);
+//                }
+//            }
 //        }
-//        return tpId.toString();
-        return "1";
-    }
+//    }
+//
+//    // send uplayer network nodes
+//    private void sendUpLayer(Network network) {
+//        // send te
+//        List<NetworkNode> nodes = network.getNodes();
+//        sendTe(nodes, network);
+//
+//        // send te link
+//        List<NetworkLink> links = network.getLinks();
+//        sendTeLink(links);
+//    }
+//
+//    private void sendTe(List<NetworkNode> nodes, Network network) {
+//        KeyId networkId = network.networkId();
+//
+//        for (NetworkNode node : nodes) {
+//            if (node instanceof DefaultNetworkNode) {
+//                DefaultNetworkNode defaultNode = (DefaultNetworkNode) node;
+//                // send te
+//                sendTeDevice(defaultNode, networkId);
+//                // send supportingNode
+//                sendInnerLayer(defaultNode);
+//            }
+//        }
+//
+//    }
+
+//    private void sendInnerLayer(DefaultNetworkNode defaultNode) {
+//        innerLayerDevices(defaultNode);
+//        innerLayerLinks(defaultNode);
+//    }
+//
+//    private void innerLayerDevices(DefaultNetworkNode defaultNode) {
+//        List<NetworkNodeKey> supportingNodeIds = defaultNode
+//                .getSupportingNodeIds();
+//        TeNode te = defaultNode.getTe();
+//        if (supportingNodeIds == null) {
+//            return;
+//        }
+//        for (NetworkNodeKey key : supportingNodeIds) {
+//            Device device = createSupportingDevice(key, te);
+//            sendMessage(deviceMessageLayer(
+//                    new DeviceEvent(DEVICE_ADDED, device)));
+//
+//            Link link = createMiddleLink(key, defaultNode);
+//            sendMessage(linkMessage(new LinkEvent(LINK_ADDED, link)));
+//        }
+//
+//    }
+//
+//    private void innerLayerLinks(DefaultNetworkNode defaultNode) {
+//        TeNode te = defaultNode.getTe();
+//        List<ConnectivityMatrix> connMatrices = te
+//                .connectivityMatrices();
+//        if (connMatrices == null) {
+//            return;
+//        }
+//        for (ConnectivityMatrix matrix : connMatrices) {
+//            Link link = createMatrixLink(matrix);
+//
+//            sendMessage(linkMessage(new LinkEvent(LINK_ADDED, link)));
+//        }
+//    }
+//
+//
+//    private void sendTeDevice(DefaultNetworkNode defaultNode, KeyId networkId) {
+////        TeNode te = defaultNode.getTe();
+//        Device device = createTeDevice(defaultNode, networkId);
+//        sendMessage(deviceMessageLayer(
+//                new DeviceEvent(DEVICE_ADDED, device)));
+//    }
+//
+//    private Device createTeDevice(DefaultNetworkNode node, KeyId networkId) {
+//        DefaultAnnotations annotations =
+//                DefaultAnnotations.builder().set("name", node.nodeId().toString())
+//                        .set(LAYER_KEY, LAYER_CONTROLLER)
+//                        .set(LAYER_MASTER, networkId.toString())
+//                        .build();
+//        Device device = new DefaultDevice(null,
+//                                          DeviceId.deviceId(node.nodeId().toString()),
+//                                          Device.Type.SWITCH,
+//                                          "",
+//                                          "",
+//                                          "",
+//                                          "",
+//                                          null,
+//                                          annotations);
+//
+//        return device;
+//    }
+//
+//    private Device createSupportingDevice(NetworkNodeKey key, TeNode te) {
+//        DefaultAnnotations annotations =
+//                DefaultAnnotations.builder().set("name", key.nodeId().toString())
+//                        .set(LAYER_KEY, LAYER_TRAFFIC)
+//                        .set(LAYER_MASTER, te.teNodeId())
+//                        .build();
+//        Device device = new DefaultDevice(null,
+//                                          DeviceId.deviceId(key.nodeId().toString()),
+//                                          Device.Type.SWITCH,
+//                                          "",
+//                                          "",
+//                                          "",
+//                                          "",
+//                                          null,
+//                                          annotations);
+//
+//        return device;
+//    }
+//
+//    private void sendTeLink(List<NetworkLink> links) {
+//        for (NetworkLink networkLink : links) {
+//            Link link = createTeLink(networkLink);
+//
+//            sendMessage(linkMessage(new LinkEvent(LINK_ADDED, link)));
+//        }
+//    }
+//
+//    private Link createTeLink(NetworkLink networkLink) {
+//        TerminationPointKey from = networkLink.getSource();
+//        TerminationPointKey to = networkLink.getDestination();
+//
+//        ConnectPoint src = new ConnectPoint(DeviceId.deviceId(from.nodeId().toString()),
+//                                            PortNumber.portNumber(portNaNCheck(from.tpId())));
+//
+//        ConnectPoint dst = new ConnectPoint(DeviceId.deviceId(to.nodeId().toString()),
+//                                            PortNumber.portNumber(portNaNCheck(to.tpId())));
+//
+//        DefaultLink.Builder builder = DefaultLink.builder();
+//        builder.providerId(new ProviderId("127.0.0.1", "meow-topo"));
+//        builder.src(src);
+//        builder.dst(dst);
+//        builder.type(Link.Type.DIRECT);
+//        builder.state(Link.State.ACTIVE);
+//        builder.isExpected(true);
+//        Link link = builder.build();
+//
+//        return link;
+//    }
+//
+//    private Link createMiddleLink(NetworkNodeKey key, DefaultNetworkNode node) {
+//        ConnectPoint src = new ConnectPoint(DeviceId.deviceId(node.nodeId().toString()),
+//                                            PortNumber.portNumber("0"));
+//
+//        ConnectPoint dst = new ConnectPoint(DeviceId.deviceId(key.nodeId().toString()),
+//                                            PortNumber.portNumber("0"));
+//
+//        DefaultLink.Builder builder = DefaultLink.builder();
+//        builder.providerId(new ProviderId("127.0.0.1", "meow-topo"));
+//        builder.src(src);
+//        builder.dst(dst);
+//        builder.type(Link.Type.DIRECT);
+//
+//        builder.state(Link.State.ACTIVE);
+//        builder.isExpected(true);
+//        Link link = builder.build();
+//
+//        return link;
+//    }
+//
+//    private Link createMatrixLink(ConnectivityMatrix matrix) {
+//        TerminationPointKey from = matrix.from();
+//        TerminationPointKey to = matrix.to();
+//
+//        ConnectPoint src = new ConnectPoint(DeviceId.deviceId(from.nodeId().toString()),
+//                                            PortNumber.portNumber(portNaNCheck(from.tpId())));
+//
+//        ConnectPoint dst = new ConnectPoint(DeviceId.deviceId(to.nodeId().toString()),
+//                                            PortNumber.portNumber(portNaNCheck(to.tpId())));
+//
+//        DefaultLink.Builder builder = DefaultLink.builder();
+//        builder.providerId(new ProviderId("127.0.0.1", "meow-topo"));
+//        builder.src(src);
+//        builder.dst(dst);
+//        builder.type(Link.Type.DIRECT);
+//
+//        builder.state(Link.State.ACTIVE);
+//        builder.isExpected(true);
+//        Link link = builder.build();
+//
+//        return link;
+//    }
+//
+//    private String portNaNCheck(KeyId tpId) {
+////        if (tpId == null) {
+////            return "0";
+////        }
+////        return tpId.toString();
+//        return "1";
+//    }
 
 
     private Link createDemoLink(String srcId, String dstId) {

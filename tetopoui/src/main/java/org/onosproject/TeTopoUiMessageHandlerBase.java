@@ -24,7 +24,7 @@ import org.onosproject.net.flow.FlowRuleService;
 import org.onosproject.net.host.HostService;
 import org.onosproject.net.link.LinkEvent;
 import org.onosproject.net.link.LinkService;
-import org.onosproject.tetopology.management.api.TeTopologyService;
+//import org.onosproject.tetopology.management.api.TeTopologyService;
 import org.onosproject.ui.JsonUtils;
 import org.onosproject.ui.UiConnection;
 import org.onosproject.ui.UiMessageHandler;
@@ -70,7 +70,7 @@ public abstract class TeTopoUiMessageHandlerBase extends UiMessageHandler {
     protected MastershipService mastershipService;
     protected FlowRuleService flowService;
 //    protected TunnelService tunnelService;
-    protected TeTopologyService teTopologyService;
+//    protected TeTopologyService teTopologyService;
 
 
     // multi topo layer define
@@ -104,7 +104,7 @@ public abstract class TeTopoUiMessageHandlerBase extends UiMessageHandler {
 //        String ver = directory.get(CoreService.class).version().toString();
 //        version = ver.replace(".SNAPSHOT", "*").replaceFirst("~.*$", "");
 
-        teTopologyService = directory.get(TeTopologyService.class);
+//        teTopologyService = directory.get(TeTopologyService.class);
     }
 
 
@@ -138,11 +138,11 @@ public abstract class TeTopoUiMessageHandlerBase extends UiMessageHandler {
 
     protected ObjectNode deviceMessageLayer(DeviceEvent event) {
         Device device = event.subject();
-        String ctrlLayer = device.annotations().value(LAYER_KEY);
+        String layer = device.annotations().value(LAYER_KEY);
         ObjectNode payload = objectNode()
                 .put("id", device.id().toString())
                 .put("type", device.type().toString().toLowerCase())
-                .put("online", ctrlLayer.equals(LAYER_CONTROLLER))
+                .put("online", layer.equals(LAYER_CONTROLLER))
                 .put("master", "127.0.0.1");
 
         // Generate labels: id, chassis id, no-label, optional-name

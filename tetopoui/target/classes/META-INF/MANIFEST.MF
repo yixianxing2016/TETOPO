@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1474193137696
+Bnd-LastModified: 1476776084994
 Build-Jdk: 1.8.0_91
 Built-By: root
 Bundle-Description: ONOS OSGi UI Custom-View bundle archetype
@@ -12,9 +12,8 @@ Created-By: Apache Maven Bundle Plugin
 Export-Package: org.onosproject;uses:="com.fasterxml.jackson.databind.no
  de,org.onlab.osgi,org.onosproject.cluster,org.onosproject.mastership,or
  g.onosproject.net,org.onosproject.net.device,org.onosproject.net.flow,o
- rg.onosproject.net.host,org.onosproject.net.link,org.onosproject.tetopo
- logy.management.api,org.onosproject.ui,org.onosproject.ui.topo,org.slf4
- j";version="1.7.0"
+ rg.onosproject.net.host,org.onosproject.net.link,org.onosproject.ui,org
+ .onosproject.ui.topo,org.slf4j";version="1.7.0"
 Import-Package: 
  com.fasterxml.jackson.databind;version="[2.7,3)",
  com.fasterxml.jackson.databind.node;version="[2.7,3)",
@@ -32,9 +31,6 @@ Import-Package:
  org.onosproject.net.host;version="[1.7,2)",
  org.onosproject.net.link;version="[1.7,2)",
  org.onosproject.net.provider;version="[1.7,2)",
- org.onosproject.tetopology.management.api;version="[1.7,2)",
- org.onosproject.tetopology.management.api.link;version="[1.7,2)",
- org.onosproject.tetopology.management.api.node;version="[1.7,2)",
  org.onosproject.ui;version="[1.7,2)",
  org.onosproject.ui.topo;version="[1.7,2)",
  org.slf4j;version="[1.7,2)"
